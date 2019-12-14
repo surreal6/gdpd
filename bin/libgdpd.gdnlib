@@ -1,0 +1,18 @@
+[general]
+
+singleton=false
+load_once=true
+symbol_prefix="godot_"
+reloadable=true
+
+[entry]
+
+X11.64="res://addons/gdpd/bin/x11/libgdpd.so"
+Windows.64="res://addons/gdpd/bin/win/libgdpd.dll"
+OSX.64="res://addons/gdpd/bin/osx/libgdpd.dylib"
+
+[dependencies]
+
+X11.64=[]
+Windows.64=[  ]
+OSX.64=[  ]
