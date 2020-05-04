@@ -12,17 +12,21 @@ void Gdpd::_register_methods() {
     register_method("add_symbol", &Gdpd::add_symbol);
     register_method("add_float", &Gdpd::add_float);
     register_method("finish_list", &Gdpd::finish_list);
+    register_method("set_volume", &Gdpd::set_volume);
 }
 
 int Gdpd::audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData){
-   // pass audio samples to/from libpd
-   int ticks = nBufferFrames / 64;
-   libpd_process_float(ticks, (float*)inputBuffer, (float*)outputBuffer);
-   return 0;
+	Gdpd* gdpd = static_cast<Gdpd*>(userData);
+	int ticks = nBufferFrames / 64;
+	gdpd->m_pd.processFloat(ticks, (float*)inputBuffer, (float*)outputBuffer);
+	gdpd->m_pd.receiveMessages();
+	for(int b=0; b<nBufferFrames; ++b) {
+		((float*)outputBuffer)[b]*=gdpd->get_volume();
+	}
+	return 0;
 }
 
-
-Gdpd::Gdpd() {
+Gdpd::Gdpd(): m_vol(1) {
 }
 
 void Gdpd::_init() {
@@ -30,22 +34,16 @@ void Gdpd::_init() {
 }
 
 Gdpd::~Gdpd() {
-    // add your cleanup here
 }
 
 int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
-
 
 	if(!m_pd.init(nbInputs, nbOutputs, sampleRate, true)) {
 		Godot::print("GDPD : Error starting libpd");
 		return 1;
 	}
 
-	/*
-	int bufsize = 128;
-	m_inBuf = new float[bufsize * nbInputs];
-	m_outBuf = new float[bufsize * nbOutputs];
-	*/
+	libpd_set_verbose(1);
 
 	//create message array
 	m_messages = new Array();
@@ -79,7 +77,7 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
 	try {
 		m_audio.openStream(&outParams, &inParams, RTAUDIO_FLOAT32, 
 						   sr, &m_bufferFrames, &audioCallback, 
-						   &m_pd, &options);
+						   this, &options);
 		m_audio.startStream();
 	}
 	catch(RtAudioError& e) {
@@ -87,7 +85,7 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
 	}
 
 
-	Godot::print("GDPD : Initialized");
+	print("Initialized");
 
 	return 0;
 }
@@ -100,7 +98,7 @@ void Gdpd::openfile(godot::String baseStr, godot::String dirStr) {
 
 	libpd_openfile(baseS.c_str(), dirS.c_str());
 
-	Godot::print("GDPD : Opened patch");
+	print("Opened patch");
 }
 
 void Gdpd::closefile() {
@@ -150,7 +148,7 @@ int Gdpd::finish_list(String destStr) {
 
 
 void Gdpd::print(const std::string& message) {
-	Godot::print(message.c_str());
+	Godot::print((std::string("GDPD : ")+message).c_str());
 }
 
 void Gdpd::receiveList(const std::string& dest, const pd::List& list) {
@@ -168,3 +166,8 @@ void Gdpd::receiveList(const std::string& dest, const pd::List& list) {
 
 	m_messages->push_back(gdlist);
 }
+
+void Gdpd::set_volume(float vol) {
+	m_vol=vol;
+}
+

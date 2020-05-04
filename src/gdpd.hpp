@@ -25,6 +25,7 @@ private:
 	pd::Patch m_patch;
 	RtAudio m_audio;
 	unsigned int m_bufferFrames;
+	float m_vol;
 
 public:
     static void _register_methods();
@@ -47,9 +48,15 @@ public:
 	int finish_list(String destStr);
 
 	//libpd hooks
-	void print(const std::string& message);
+	virtual void print(const std::string& message);
 	void receiveList(const std::string& dest, const pd::List& list);
 
+	//godot functions
+	void set_volume(float vol);
+	inline const float& get_volume(){return m_vol;}
+
+
+	//rtaudio
 	static int audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 
 };
