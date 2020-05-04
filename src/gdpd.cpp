@@ -19,7 +19,6 @@ int Gdpd::audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBuf
 	Gdpd* gdpd = static_cast<Gdpd*>(userData);
 	int ticks = nBufferFrames / 64;
 	gdpd->m_pd.processFloat(ticks, (float*)inputBuffer, (float*)outputBuffer);
-	gdpd->m_pd.receiveMessages();
 	for(int b=0; b<nBufferFrames; ++b) {
 		((float*)outputBuffer)[b]*=gdpd->get_volume();
 	}
@@ -43,7 +42,7 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
 		return 1;
 	}
 
-	libpd_set_verbose(1);
+	//libpd_set_verbose(1);
 
 	//create message array
 	m_messages = new Array();
