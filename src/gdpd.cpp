@@ -15,7 +15,9 @@ void Gdpd::_register_methods() {
     register_method("set_volume", &Gdpd::set_volume);
 }
 
-int Gdpd::audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData){
+int Gdpd::audioCallback(void *outputBuffer, void *inputBuffer, 
+					    unsigned int nBufferFrames, double streamTime, 
+						RtAudioStreamStatus status, void *userData){
 	Gdpd* gdpd = static_cast<Gdpd*>(userData);
 	gdpd->processAudio(outputBuffer, inputBuffer, nBufferFrames, streamTime,
 					   status, userData);
@@ -32,7 +34,7 @@ void Gdpd::_init() {
 Gdpd::~Gdpd() {
 }
 
-int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
+int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
 
 	if(!m_pd.init(nbInputs, nbOutputs, sampleRate, true)) {
 		Godot::print("GDPD : Error starting libpd");
@@ -62,7 +64,7 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
 	inParams.deviceId = m_audio.getDefaultOutputDevice();
 	outParams.nChannels = m_nbInputs = nbInputs;
 	inParams.nChannels = m_nbOutputs = nbOutputs;
-	m_bufferFrames = 128;
+	m_bufferFrames = bufferSize;
 
 	RtAudio::StreamOptions options;
 	options.streamName = "gdpd";

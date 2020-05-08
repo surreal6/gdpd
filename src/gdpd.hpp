@@ -38,7 +38,7 @@ public:
 	void _init();
 
 	//libpd functions
-	int init(int nbInputs, int nbOutputs, int sampleRate);
+	int init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize);
 	void openfile(String basename, String dirname);
 	void closefile();
 	bool has_message();
