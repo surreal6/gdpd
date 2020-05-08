@@ -26,6 +26,8 @@ private:
 	RtAudio m_audio;
 	unsigned int m_bufferFrames;
 	float m_vol;
+	int m_nbInputs;
+	int m_nbOutputs;
 
 public:
     static void _register_methods();
@@ -57,7 +59,12 @@ public:
 
 
 	//rtaudio
-	static int audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
+	static int audioCallback(void *outputBuffer, void *inputBuffer, 
+							 unsigned int nBufferFrames, double streamTime, 
+							 RtAudioStreamStatus status, void *userData);
+	void processAudio(void *outputBuffer, void *inputBuffer, 
+					   unsigned int nBufferFrames, double streamTime, 
+					   RtAudioStreamStatus status, void *userData);
 
 };
 

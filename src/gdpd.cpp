@@ -17,11 +17,8 @@ void Gdpd::_register_methods() {
 
 int Gdpd::audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData){
 	Gdpd* gdpd = static_cast<Gdpd*>(userData);
-	int ticks = nBufferFrames / 64;
-	gdpd->m_pd.processFloat(ticks, (float*)inputBuffer, (float*)outputBuffer);
-	for(int b=0; b<nBufferFrames; ++b) {
-		((float*)outputBuffer)[b]*=gdpd->get_volume();
-	}
+	gdpd->processAudio(outputBuffer, inputBuffer, nBufferFrames, streamTime,
+					   status, userData);
 	return 0;
 }
 
@@ -63,8 +60,8 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
 	unsigned int sr = m_audio.getDeviceInfo(outParams.deviceId).preferredSampleRate;
 	outParams.deviceId = m_audio.getDefaultOutputDevice();
 	inParams.deviceId = m_audio.getDefaultOutputDevice();
-	outParams.nChannels = nbInputs;
-	inParams.nChannels = nbOutputs;
+	outParams.nChannels = m_nbInputs = nbInputs;
+	inParams.nChannels = m_nbOutputs = nbOutputs;
 	m_bufferFrames = 128;
 
 	RtAudio::StreamOptions options;
@@ -87,6 +84,19 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate) {
 	print("Initialized");
 
 	return 0;
+}
+
+void Gdpd::processAudio(void *outputBuffer, void *inputBuffer, 
+						unsigned int nBufferFrames, double streamTime, 
+						RtAudioStreamStatus status, void *userData) {
+	int ticks = nBufferFrames / libpd_blocksize();
+
+	m_pd.processFloat(ticks, (float*)inputBuffer, (float*)outputBuffer);
+
+	//volume control on the output
+	for(int b=0; b<nBufferFrames*m_nbOutputs; ++b) {
+		((float*)outputBuffer)[b]*=m_vol;
+	}
 }
 
 void Gdpd::openfile(godot::String baseStr, godot::String dirStr) {
