@@ -50,13 +50,13 @@ if env['platform'] == "osx":
     env['target_path'] += 'osx/'
     cpp_library += '.osx'
     env.Append(CPPDEFINES=['__MACOSX_CORE__'])
-    env.Append(CXXFLAGS=['-std=c++17', '-framework CoreAudio', '-framework CoreFoundation'])
+    env.Append(CXXFLAGS=['-std=c++17'])
+    env.Append(LINKFLAGS=['-arch', 'x86_64','-framework', 
+                          'CoreAudio', '-framework', 'CoreFoundation'])
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS=['-g', '-O2', '-arch', 'x86_64'])
-        env.Append(LINKFLAGS=['-arch', 'x86_64'])
     else:
         env.Append(CCFLAGS=['-g', '-O3', '-arch', 'x86_64'])
-        env.Append(LINKFLAGS=['-arch', 'x86_64'])
 
 elif env['platform'] in ('x11', 'linux'):
     env['target_path'] += 'x11/'
