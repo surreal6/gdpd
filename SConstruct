@@ -49,7 +49,7 @@ if env['platform'] == '':
 if env['platform'] == "osx":
     env['target_path'] += 'osx/'
     cpp_library += '.osx'
-    env.Append(CPPDEFINES=['__MACOSX_CORE__'])
+    env.Append(CPPDEFINES=['__MACOSX_CORE__', 'HAVE_UNISTD_H'])
     env.Append(CXXFLAGS=['-std=c++17'])
     env.Append(LINKFLAGS=['-arch', 'x86_64','-framework', 
                           'CoreAudio', '-framework', 'CoreFoundation'])

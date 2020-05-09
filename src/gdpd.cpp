@@ -61,7 +61,7 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
 	RtAudio::StreamParameters outParams, inParams;
 	unsigned int sr = m_audio.getDeviceInfo(outParams.deviceId).preferredSampleRate;
 	outParams.deviceId = m_audio.getDefaultOutputDevice();
-	inParams.deviceId = m_audio.getDefaultOutputDevice();
+	inParams.deviceId = m_audio.getDefaultInputDevice();
 	outParams.nChannels = m_nbInputs = nbInputs;
 	inParams.nChannels = m_nbOutputs = nbOutputs;
 	m_bufferFrames = bufferSize;
