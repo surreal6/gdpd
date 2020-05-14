@@ -58,22 +58,30 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
 		Godot::print("There are no available sound devices.");
 	}
 
-	RtAudio::StreamParameters outParams, inParams;
-	unsigned int sr = m_audio.getDeviceInfo(outParams.deviceId).preferredSampleRate;
+	RtAudio::StreamParameters outParams, inpParams;
+	inpParams.deviceId = m_audio.getDefaultInputDevice();
 	outParams.deviceId = m_audio.getDefaultOutputDevice();
-	inParams.deviceId = m_audio.getDefaultInputDevice();
-	outParams.nChannels = m_nbInputs = nbInputs;
-	inParams.nChannels = m_nbOutputs = nbOutputs;
-	m_bufferFrames = bufferSize;
+	RtAudio::DeviceInfo inpInfo = m_audio.getDeviceInfo(inpParams.deviceId);
+	RtAudio::DeviceInfo outInfo = m_audio.getDeviceInfo(outParams.deviceId);
+
+	unsigned int sr = outInfo.preferredSampleRate;
+	inpParams.nChannels = m_nbInputs 
+						= std::min<int>(nbInputs, inpInfo.inputChannels);
+	outParams.nChannels = m_nbOutputs
+						= std::min<int>(nbOutputs, outInfo.outputChannels);
+	print("Output channels = "+std::to_string(outParams.nChannels));
+	print("Input channels = "+std::to_string(inpParams.nChannels));
+	m_bufferFrames = std::max<int>(64, bufferSize);
+
 
 	RtAudio::StreamOptions options;
 	options.streamName = "gdpd";
 	options.flags = RTAUDIO_SCHEDULE_REALTIME;
 	if(m_audio.getCurrentApi() != RtAudio::MACOSX_CORE) {
-		options.flags |= RTAUDIO_MINIMIZE_LATENCY; // CoreAudio doesn't seem to like this
+		options.flags |= RTAUDIO_MINIMIZE_LATENCY;
 	}
 	try {
-		m_audio.openStream(&outParams, &inParams, RTAUDIO_FLOAT32, 
+		m_audio.openStream(&outParams, &inpParams, RTAUDIO_FLOAT32, 
 						   sr, &m_bufferFrames, &audioCallback, 
 						   this, &options);
 		m_audio.startStream();
