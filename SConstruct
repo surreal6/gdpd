@@ -49,7 +49,7 @@ if env['platform'] == '':
 if env['platform'] == "osx":
     env['target_path'] += 'osx/'
     cpp_library += '.osx'
-    env.Append(CPPDEFINES=['__MACOSX_CORE__', 'HAVE_UNISTD_H'])
+    env.Append(CPPDEFINES=['__MACOSX_CORE__', 'HAVE_UNISTD_H', 'LIBPD_EXTRA'])
     env.Append(CXXFLAGS=['-std=c++17'])
     env.Append(LINKFLAGS=['-arch', 'x86_64','-framework', 
                           'CoreAudio', '-framework', 'CoreFoundation'])
@@ -61,7 +61,7 @@ if env['platform'] == "osx":
 elif env['platform'] in ('x11', 'linux'):
     env['target_path'] += 'x11/'
     cpp_library += '.linux'
-    env.Append(CPPDEFINES=['__UNIX_JACK__'])
+    env.Append(CPPDEFINES=['__UNIX_JACK__', 'LIBPD_EXTRA'])
     env.Append(LINKFLAGS=['-ljack','-pthread'])
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS=['-fPIC', '-g3', '-Og'])
@@ -105,8 +105,7 @@ env.Append(CFLAGS=['-DUSEAPI_DUMMY', '-DPD', '-DHAVE_UNISTD_H', '-D_GNU_SOURCE']
 # tweak this if you want to use different folders, or more folders, to store your source code in.
 env.Append(CPPPATH=['src/'])
 
-#sources = Glob('src/*.cpp')
-sources = Glob('src/*.cpp') + Glob('src/rtaudio/*.cpp') + Glob('src/libpd/libpd_wrapper/*.c') + Glob('src/libpd/libpd_wrapper/util/*.c') + Glob('src/libpd/pure-data/extra/**/*.c') + Glob('src/libpd/pure-data/src/[xmgz]_*.c') + Glob('src/libpd/pure-data/src/d_[acgmorsu]*.c') + Glob('src/libpd/pure-data/src/d_dac.c') + Glob('src/libpd/pure-data/src/d_delay.c') + Glob('src/libpd/pure-data/src/d_fft.c') + Glob('src/libpd/pure-data/src/d_fft_fftsg.c') + Glob('src/libpd/pure-data/src/d_filter.c') + Glob('src/libpd/pure-data/src/s_audio.c') + Glob('src/libpd/pure-data/src/s_audio_dummy.c') + Glob('src/libpd/pure-data/src/s_print.c') + Glob('src/libpd/pure-data/src/s_path.c')  + Glob('src/libpd/pure-data/src/s_main.c') + Glob('src/libpd/pure-data/src/s_inter.c') + Glob('src/libpd/pure-data/src/s_utf8.c') + Glob('src/libpd/pure-data/src/s_loader.c')
+sources = Glob('src/*.cpp') + Glob('src/rtaudio/*.cpp') + Glob('src/libpd/libpd_wrapper/*.c') + Glob('src/libpd/libpd_wrapper/util/*.c') + Glob('src/libpd/pure-data/extra/**/*.c') + Glob('src/libpd/pure-data/src/[xmgz]_*.c') + Glob('src/libpd/pure-data/src/d_[acgmorsu]*.c') + Glob('src/libpd/pure-data/src/d_dac.c') + Glob('src/libpd/pure-data/src/d_delay.c') + Glob('src/libpd/pure-data/src/d_fft.c') + Glob('src/libpd/pure-data/src/d_fft_fftsg.c') + Glob('src/libpd/pure-data/src/d_filter.c') + Glob('src/libpd/pure-data/src/s_audio.c') + Glob('src/libpd/pure-data/src/s_audio_dummy.c') + Glob('src/libpd/pure-data/src/s_print.c') + Glob('src/libpd/pure-data/src/s_path.c')  + Glob('src/libpd/pure-data/src/s_main.c') + Glob('src/libpd/pure-data/src/s_inter.c') + Glob('src/libpd/pure-data/src/s_utf8.c') + Glob('src/libpd/pure-data/src/s_loader.c') + Glob('src/libpd/pure-data/extra/*.c')
 
 library = env.SharedLibrary(target=env['target_path'] + env['target_name'] , source=sources)
 
