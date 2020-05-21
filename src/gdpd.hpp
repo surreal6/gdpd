@@ -28,6 +28,9 @@ private:
 	float m_vol;
 	int m_nbInputs;
 	int m_nbOutputs;
+	int m_sampleRate;
+	int m_inputDevice;
+	int m_outputDevice;
 
 public:
     static void _register_methods();
@@ -38,7 +41,11 @@ public:
 	void _init();
 
 	//libpd functions
+	Array get_available_input_devices();
+	Array get_available_output_devices();
+	int init_devices(String inputDevice, String outputDevice);
 	int init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize);
+	int start();
 	void openfile(String basename, String dirname);
 	void closefile();
 	bool has_message();

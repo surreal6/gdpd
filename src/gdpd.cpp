@@ -3,6 +3,11 @@
 using namespace godot;
 
 void Gdpd::_register_methods() {
+    register_method("get_available_input_devices", 
+					&Gdpd::get_available_input_devices);
+    register_method("get_available_output_devices", 
+					&Gdpd::get_available_output_devices);
+    register_method("init_devices", &Gdpd::init_devices);
     register_method("init", &Gdpd::init);
     register_method("openfile", &Gdpd::openfile);
     register_method("closefile", &Gdpd::closefile);
@@ -35,9 +40,75 @@ void Gdpd::_init() {
 Gdpd::~Gdpd() {
 }
 
-int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
+Array Gdpd::get_available_input_devices() {
+	Array gdlist;
+	for(int d=0; d<m_audio.getDeviceCount(); d++) {
+		if(m_audio.getDeviceInfo(d).inputChannels>0) {
+			gdlist.push_back(m_audio.getDeviceInfo(d).name.c_str());
+		}
+	}
+	return gdlist;
+}
 
-	if(!m_pd.init(nbInputs, nbOutputs, sampleRate, true)) {
+Array Gdpd::get_available_output_devices() {
+	Array gdlist;
+	for(int d=0; d<m_audio.getDeviceCount(); d++) {
+		if(m_audio.getDeviceInfo(d).outputChannels>0) {
+			gdlist.push_back(m_audio.getDeviceInfo(d).name.c_str());
+		}
+	}
+	return gdlist;
+}
+
+
+int Gdpd::init_devices(String inputDevice, String outputDevice) {
+	std::wstring inpWs = inputDevice.unicode_str();
+	std::string inpStr(inpWs.begin(), inpWs.end());
+	std::wstring outWs = outputDevice.unicode_str();
+	std::string outStr(outWs.begin(), outWs.end());
+
+	for(int d=0; d<m_audio.getDeviceCount(); d++) {
+		std::string n = m_audio.getDeviceInfo(d).name;
+		if(n.compare(inpStr)==0) {
+			m_inputDevice = d;
+		}
+		if(n.compare(outStr)==0) {
+			m_outputDevice = d;
+		}
+	}
+
+	RtAudio::DeviceInfo inpInfo = m_audio.getDeviceInfo(m_inputDevice);
+	RtAudio::DeviceInfo outInfo = m_audio.getDeviceInfo(m_outputDevice);
+	m_nbInputs = inpInfo.inputChannels;
+	m_nbOutputs = outInfo.outputChannels;
+	m_sampleRate = outInfo.preferredSampleRate;
+	m_bufferFrames = 128;
+	return start();
+}
+
+int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
+	m_inputDevice = m_audio.getDefaultInputDevice();
+	m_outputDevice = m_audio.getDefaultOutputDevice();
+	RtAudio::DeviceInfo inpInfo = m_audio.getDeviceInfo(m_inputDevice);
+	RtAudio::DeviceInfo outInfo = m_audio.getDeviceInfo(m_outputDevice);
+	m_nbInputs 	= std::min<int>(nbInputs, inpInfo.inputChannels);
+	m_nbOutputs = std::min<int>(nbOutputs, outInfo.outputChannels);
+	m_sampleRate = sampleRate;
+	m_bufferFrames = std::max<int>(64, bufferSize);
+	return start();
+}
+
+int Gdpd::start() {
+	RtAudio::StreamParameters outParams, inpParams;
+	inpParams.deviceId = m_inputDevice;
+	inpParams.nChannels = m_nbInputs;
+	outParams.deviceId = m_outputDevice;
+	outParams.nChannels = m_nbOutputs;
+	print("Output channels = "+std::to_string(outParams.nChannels));
+	print("Input channels = "+std::to_string(inpParams.nChannels));
+
+
+	if(!m_pd.init(m_nbInputs, m_nbOutputs, m_sampleRate, true)) {
 		Godot::print("GDPD : Error starting libpd");
 		return 1;
 	}
@@ -59,20 +130,6 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
 		Godot::print("There are no available sound devices.");
 	}
 
-	RtAudio::StreamParameters outParams, inpParams;
-	inpParams.deviceId = m_audio.getDefaultInputDevice();
-	outParams.deviceId = m_audio.getDefaultOutputDevice();
-	RtAudio::DeviceInfo inpInfo = m_audio.getDeviceInfo(inpParams.deviceId);
-	RtAudio::DeviceInfo outInfo = m_audio.getDeviceInfo(outParams.deviceId);
-
-	unsigned int sr = outInfo.preferredSampleRate;
-	inpParams.nChannels = m_nbInputs 
-						= std::min<int>(nbInputs, inpInfo.inputChannels);
-	outParams.nChannels = m_nbOutputs
-						= std::min<int>(nbOutputs, outInfo.outputChannels);
-	print("Output channels = "+std::to_string(outParams.nChannels));
-	print("Input channels = "+std::to_string(inpParams.nChannels));
-	m_bufferFrames = std::max<int>(64, bufferSize);
 
 
 	RtAudio::StreamOptions options;
@@ -83,7 +140,7 @@ int Gdpd::init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize) {
 	}
 	try {
 		m_audio.openStream(&outParams, &inpParams, RTAUDIO_FLOAT32, 
-						   sr, &m_bufferFrames, &audioCallback, 
+						   m_sampleRate, &m_bufferFrames, &audioCallback, 
 						   this, &options);
 		m_audio.startStream();
 	}
