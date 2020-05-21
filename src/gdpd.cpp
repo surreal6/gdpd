@@ -6,6 +6,7 @@ void Gdpd::_register_methods() {
     register_method("init", &Gdpd::init);
     register_method("openfile", &Gdpd::openfile);
     register_method("closefile", &Gdpd::closefile);
+    register_method("subscribe", &Gdpd::subscribe);
     register_method("has_message", &Gdpd::has_message);
     register_method("get_next", &Gdpd::get_next);
     register_method("start_message", &Gdpd::start_message);
@@ -122,6 +123,12 @@ void Gdpd::openfile(godot::String baseStr, godot::String dirStr) {
 
 void Gdpd::closefile() {
 	m_pd.closePatch(m_patch);
+}
+
+void Gdpd::subscribe(String symbStr) {
+	std::wstring symbWs = symbStr.unicode_str();
+	std::string symbS(symbWs.begin(), symbWs.end());
+	m_pd.subscribe(symbS.c_str());
 }
 
 bool Gdpd::has_message() {

@@ -44,6 +44,7 @@ public:
 	bool has_message();
 	Array get_next();
 	int blocksize();
+	void subscribe(String symbStr);
 	int start_message(int nbValues);
 	void add_symbol(String symbStr);
 	void add_float(float val);
