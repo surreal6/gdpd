@@ -9,6 +9,7 @@ void Gdpd::_register_methods() {
 					&Gdpd::get_available_output_devices);
     register_method("init_devices", &Gdpd::init_devices);
     register_method("init", &Gdpd::init);
+    register_method("stop", &Gdpd::stop);
     register_method("openfile", &Gdpd::openfile);
     register_method("closefile", &Gdpd::closefile);
     register_method("subscribe", &Gdpd::subscribe);
@@ -130,8 +131,6 @@ int Gdpd::start() {
 		Godot::print("There are no available sound devices.");
 	}
 
-
-
 	RtAudio::StreamOptions options;
 	options.streamName = "gdpd";
 	options.flags = RTAUDIO_SCHEDULE_REALTIME;
@@ -154,6 +153,14 @@ int Gdpd::start() {
 	return 0;
 }
 
+void Gdpd::stop() {
+	m_audio.stopStream();
+	m_audio.closeStream();
+	m_pd.closePatch(m_patch);
+	m_pd.computeAudio(false);
+	print("Stopped");
+}
+
 void Gdpd::processAudio(void *outputBuffer, void *inputBuffer, 
 						unsigned int nBufferFrames, double streamTime, 
 						RtAudioStreamStatus status, void *userData) {
@@ -173,7 +180,8 @@ void Gdpd::openfile(godot::String baseStr, godot::String dirStr) {
 	std::wstring dirWs = dirStr.unicode_str();
 	std::string dirS(dirWs.begin(), dirWs.end());
 
-	libpd_openfile(baseS.c_str(), dirS.c_str());
+	//libpd_openfile(baseS.c_str(), dirS.c_str());
+	m_patch = m_pd.openPatch(baseS.c_str(), dirS.c_str());
 
 	print("Opened patch");
 }

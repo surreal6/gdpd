@@ -46,6 +46,7 @@ public:
 	int init_devices(String inputDevice, String outputDevice);
 	int init(int nbInputs, int nbOutputs, int sampleRate, int bufferSize);
 	int start();
+	void stop();
 	void openfile(String basename, String dirname);
 	void closefile();
 	bool has_message();

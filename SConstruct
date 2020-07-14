@@ -11,6 +11,7 @@ opts.Add(EnumVariable('target', "Compilation target", 'debug', ['d', 'debug', 'r
 opts.Add(EnumVariable('platform', "Compilation platform", '', ['', 'windows', 'x11', 'linux', 'osx']))
 opts.Add(EnumVariable('p', "Compilation target, alias for 'platform'", '', ['', 'windows', 'x11', 'linux', 'osx']))
 opts.Add(BoolVariable('use_llvm', "Use the LLVM / Clang compiler", 'no'))
+opts.Add(BoolVariable('use_mingw', "Use the MingW for cross-compiling", 'no'))
 opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'bin/'))
 opts.Add(PathVariable('target_name', 'The library name.', 'libgdpd', PathVariable.PathAccept))
 
@@ -29,6 +30,7 @@ opts.Update(env)
 if env['use_llvm']:
     env['CC'] = 'clang'
     env['CXX'] = 'clang++'
+
 
 if env['p'] != '':
     env['platform'] = env['p']
@@ -75,19 +77,40 @@ elif env['platform'] in ('x11', 'linux'):
 elif env['platform'] == "windows":
     env['target_path'] += 'win64/'
     cpp_library += '.windows'
-    # This makes sure to keep the session environment variables on windows,
-    # that way you can run scons in a vs 2017 prompt and it will find all the required tools
     env.Append(ENV=os.environ)
 
-    env.Append(CPPDEFINES=['WIN32', '_WIN32', '_WINDOWS', '_CRT_SECURE_NO_WARNINGS'])
-    env.Append(CCFLAGS=['-W3', '-GR'])
-    if env['target'] in ('debug', 'd'):
-        env.Append(CPPDEFINES=['_DEBUG'])
-        env.Append(CCFLAGS=['-EHsc', '-MDd', '-ZI'])
-        env.Append(LINKFLAGS=['-DEBUG'])
+    if not env['use_mingw']:
+        # MSVC
+        env.Append(LINKFLAGS=['/WX'])
+        if env['target'] == 'debug':
+            env.Append(CCFLAGS=['/EHsc', '/D_DEBUG', '/MDd'])
+        elif env['target'] == 'release':
+            env.Append(CCFLAGS=['/O2', '/EHsc', '/DNDEBUG', '/MD'])
     else:
-        env.Append(CPPDEFINES=['NDEBUG'])
-        env.Append(CCFLAGS=['-O2', '-EHsc', '-MD'])
+        # MinGW
+        env['CXX'] = 'x86_64-w64-mingw32-g++-win32'
+        env['CC'] = 'x86_64-w64-mingw32-gcc-win32'
+        env.Append(CCFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
+        env.Append(LINKFLAGS=['--static', '-Wl,--no-undefined', '-static-libgcc', '-static-libstdc++'])
+        env.Append(CPPDEFINES=['WIN32', '_WIN32', '_MSC_VER', '_WINDOWS', '_CRT_SECURE_NO_WARNINGS'])
+        #env.Append(CPPDEFINES=['__WINDOWS_DS__', 'LIBPD_EXTRA'])
+        env.Append(CPPDEFINES=['__RTAUDIO_DUMMY__', 'LIBPD_EXTRA'])
+        env.Append(CFLAGS=['-DUSEAPI_DUMMY', '-DPD', '-DHAVE_UNISTD_H', '-D_GNU_SOURCE'])
+
+
+    #env.Append(CPPDEFINES=['WINVER=0x502'])
+    #env.Append(CCFLAGS=['-W3', '-GR'])
+    env.Append(LINKFLAGS=['-pthread'])
+    #if env['use_mingw']:
+        #env['CC'] = 'x86_64-w64-mingw32-gcc'
+        #env['CXX'] = 'x86_64-w64-mingw32-g++'
+        #env['AR'] = "x86_64-w64-mingw32-ar"
+        #env['RANLIB'] = "x86_64-w64-mingw32-ranlib"
+        #env['LINK'] = "x86_64-w64-mingw32-g++"
+#        env.Append(CFLAGS=['-std=c11'])
+    #    env.Append(CXXFLAGS=['-fpermissive'])
+    #    env.Append(LIBS=['ws2_32', 'kernel32'])
+    #    env.Append(LINKFLAGS=['-shared', '-Wl,--export-all-symbols','-mwindows','-Wl,-enable-stdcall-fixup'])
 
 if env['target'] in ('debug', 'd'):
     cpp_library += '.debug'
@@ -96,7 +119,7 @@ else:
 
 cpp_library += '.' + str(bits)
 
-# make sure our binding library is properly includes
+# make sure our binding library is properly included
 env.Append(CPPPATH=['.', godot_headers_path, cpp_bindings_path + 'include/', cpp_bindings_path + 'include/core/', cpp_bindings_path + 'include/gen/', 'src/libpd/cpp','src/libpd/pure-data/src', 'src/libpd/libpd_wrapper', 'src/libpd/libpd_wrapper/util', 'src/rtaudio'])
 env.Append(LIBPATH=[cpp_bindings_path + 'bin/'])
 env.Append(LIBS=[cpp_library])
