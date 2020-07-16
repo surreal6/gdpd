@@ -12,7 +12,7 @@ opts.Add(EnumVariable('platform', "Compilation platform", '', ['', 'windows', 'x
 opts.Add(EnumVariable('p', "Compilation target, alias for 'platform'", '', ['', 'windows', 'x11', 'linux', 'osx']))
 opts.Add(BoolVariable('use_llvm', "Use the LLVM / Clang compiler", 'no'))
 opts.Add(BoolVariable('use_mingw', "Use the MingW for cross-compiling", 'no'))
-opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'bin/'))
+opts.Add(PathVariable('target_path', 'The path where the lib is installed.', 'GdpdExample/addons/gdpd/bin/'))
 opts.Add(PathVariable('target_name', 'The library name.', 'libgdpd', PathVariable.PathAccept))
 
 # Local dependency paths, adapt them to your setup
@@ -91,11 +91,25 @@ elif env['platform'] == "windows":
         env['CXX'] = 'x86_64-w64-mingw32-g++-win32'
         env['CC'] = 'x86_64-w64-mingw32-gcc-win32'
         env.Append(CCFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
-        env.Append(LINKFLAGS=['--static', '-Wl,--no-undefined', '-static-libgcc', '-static-libstdc++'])
-        env.Append(CPPDEFINES=['WIN32', '_WIN32', '_MSC_VER', '_WINDOWS', '_CRT_SECURE_NO_WARNINGS'])
+        #env.Append(LINKFLAGS=['--static', '-Wl,--no-undefined', '-static-libgcc', '-static-libstdc++'])
+        #env.Append(CPPDEFINES=['WIN32', '_WIN32', '_MSC_VER', '_WINDOWS', '_CRT_SECURE_NO_WARNINGS'])
+        env.Append(CFLAGS=['-DWINVER=0x502','-DWIN32','-D_WIN32','-Wno-int-to-pointer-cast', 
+                               '-Wno-pointer-to-int-cast'])
+        env.Append(CPPDEFINES=['HAVE_UNISTD_H=1','LIBPD_EXTRA=1','PD=1', 
+                                'PD_INTERNAL','USEAPI_DUMMY=1','libpd_EXPORTS'])
         #env.Append(CPPDEFINES=['__WINDOWS_DS__', 'LIBPD_EXTRA'])
         env.Append(CPPDEFINES=['__RTAUDIO_DUMMY__', 'LIBPD_EXTRA'])
         env.Append(CFLAGS=['-DUSEAPI_DUMMY', '-DPD', '-DHAVE_UNISTD_H', '-D_GNU_SOURCE'])
+        env.Append(LDPATH=['/usr/x86_64-w64-mingw32/lib/'])
+        env.Append(LINKFLAGS=['-Wl,--export-all-symbols',
+                '-static-libgcc','/usr/x86_64-w64-mingw32/lib/libm.a'])
+
+    #env.Append(LINKFLAGS=['-lkernel32','-luser32', '-lgdi32', 
+    #                      '-lwinspool', '-lshell32', '-lole32', 
+    #                      '-loleaut32', '-luuid', '-lcomdlg32', 
+    #                      '-ladvapi32','-lws2_32', '-lwsock32'])
+    env.Append(LINKFLAGS=['/usr/x86_64-w64-mingw32/lib/libws2_32.a',
+                            '/usr/x86_64-w64-mingw32/lib/libwsock32.a'])
 
 
     #env.Append(CPPDEFINES=['WINVER=0x502'])
@@ -128,7 +142,7 @@ env.Append(CFLAGS=['-DUSEAPI_DUMMY', '-DPD', '-DHAVE_UNISTD_H', '-D_GNU_SOURCE']
 # tweak this if you want to use different folders, or more folders, to store your source code in.
 env.Append(CPPPATH=['src/'])
 
-sources = Glob('src/*.cpp') + Glob('src/rtaudio/*.cpp') + Glob('src/libpd/libpd_wrapper/*.c') + Glob('src/libpd/libpd_wrapper/util/*.c') + Glob('src/libpd/pure-data/extra/**/*.c') + Glob('src/libpd/pure-data/src/[xmgz]_*.c') + Glob('src/libpd/pure-data/src/d_[acgmorsu]*.c') + Glob('src/libpd/pure-data/src/d_dac.c') + Glob('src/libpd/pure-data/src/d_delay.c') + Glob('src/libpd/pure-data/src/d_fft.c') + Glob('src/libpd/pure-data/src/d_fft_fftsg.c') + Glob('src/libpd/pure-data/src/d_filter.c') + Glob('src/libpd/pure-data/src/s_audio.c') + Glob('src/libpd/pure-data/src/s_audio_dummy.c') + Glob('src/libpd/pure-data/src/s_print.c') + Glob('src/libpd/pure-data/src/s_path.c')  + Glob('src/libpd/pure-data/src/s_main.c') + Glob('src/libpd/pure-data/src/s_inter.c') + Glob('src/libpd/pure-data/src/s_utf8.c') + Glob('src/libpd/pure-data/src/s_loader.c') + Glob('src/libpd/pure-data/extra/*.c')
+sources = Glob('src/*.cpp') + Glob('src/rtaudio/*.cpp') + Glob('src/libpd/libpd_wrapper/*.c') + Glob('src/libpd/libpd_wrapper/util/*.c') + Glob('src/libpd/pure-data/extra/**/*.c') + Glob('src/libpd/pure-data/src/[xmgz]_*.c') + Glob('src/libpd/pure-data/src/d_[acgmorsu]*.c') + Glob('src/libpd/pure-data/src/d_dac.c') + Glob('src/libpd/pure-data/src/d_delay.c') + Glob('src/libpd/pure-data/src/d_fft.c') + Glob('src/libpd/pure-data/src/d_fft_fftsg.c') + Glob('src/libpd/pure-data/src/d_filter.c') + Glob('src/libpd/pure-data/src/s_audio.c') + Glob('src/libpd/pure-data/src/s_audio_dummy.c') + Glob('src/libpd/pure-data/src/s_print.c') + Glob('src/libpd/pure-data/src/s_path.c')  + Glob('src/libpd/pure-data/src/s_main.c') + Glob('src/libpd/pure-data/src/s_inter.c') + Glob('src/libpd/pure-data/src/s_utf8.c') + Glob('src/libpd/pure-data/src/s_loader.c') + Glob('src/libpd/pure-data/extra/*.c') 
 
 library = env.SharedLibrary(target=env['target_path'] + env['target_name'] , source=sources)
 
