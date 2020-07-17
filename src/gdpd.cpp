@@ -156,7 +156,7 @@ int Gdpd::start() {
 void Gdpd::stop() {
 	m_audio.stopStream();
 	m_audio.closeStream();
-	m_pd.closePatch(m_patch);
+	m_pd.clear();
 	m_pd.computeAudio(false);
 	print("Stopped");
 }
@@ -181,13 +181,16 @@ void Gdpd::openfile(godot::String baseStr, godot::String dirStr) {
 	std::string dirS(dirWs.begin(), dirWs.end());
 
 	//libpd_openfile(baseS.c_str(), dirS.c_str());
-	m_patch = m_pd.openPatch(baseS.c_str(), dirS.c_str());
+	//m_patch = m_pd.openPatch(baseS.c_str(), dirS.c_str());
+	m_pd.openPatch(baseS.c_str(), dirS.c_str());
 
 	print("Opened patch");
 }
 
-void Gdpd::closefile() {
-	m_pd.closePatch(m_patch);
+void Gdpd::closefile(godot::String baseStr) {
+	std::wstring baseWs = baseStr.unicode_str();
+	std::string baseS(baseWs.begin(), baseWs.end());
+	m_pd.closePatch(baseS.c_str());
 }
 
 void Gdpd::subscribe(String symbStr) {

@@ -4,17 +4,10 @@
 script/source = "extends Control
 
 var gdpd = load(\"res://addons/gdpd/bin/gdpd.gdns\")
-var patch
+#var patch
 
 func _ready():
-	#initialize pd 
-	patch = gdpd.new()
 
-	#retrieve 
-	var inps = patch.get_available_input_devices()
-	var outs = patch.get_available_output_devices()
-	patch.init_devices(inps[0], outs[0])
-	
 	#the patch path should be the absolute one
 	_load_patch(ProjectSettings.globalize_path(\"res://patch1.pd\"))
 	_load_patch(ProjectSettings.globalize_path(\"res://patch2.pd\"))
@@ -24,6 +17,15 @@ func _load_patch(pd_patch) :
 	#separate file name from directory
 	var patch_name = pd_patch.split(\"/\")[-1]
 	var patch_dir = pd_patch.trim_suffix(patch_name)
+	
+	#initialize pd 
+	var patch = gdpd.new()
+
+	#retrieve 
+	var inps = patch.get_available_input_devices()
+	var outs = patch.get_available_output_devices()
+	patch.init_devices(inps[0], outs[0])
+	
 	
 	#load patch
 	patch.openfile(patch_name, patch_dir)

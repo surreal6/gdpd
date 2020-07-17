@@ -48,7 +48,7 @@ public:
 	int start();
 	void stop();
 	void openfile(String basename, String dirname);
-	void closefile();
+	void closefile(String basename);
 	bool has_message();
 	Array get_next();
 	int blocksize();
