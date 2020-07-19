@@ -61,6 +61,8 @@ if env['platform'] == "osx":
         env.Append(CCFLAGS=['-g', '-O3', '-arch', 'x86_64'])
 
 elif env['platform'] in ('x11', 'linux'):
+    env['CC'] = 'gcc-7'
+    env['CXX'] = 'g++-7'
     env['target_path'] += 'x11/'
     cpp_library += '.linux'
     env.Append(CPPDEFINES=['__UNIX_JACK__', 'LIBPD_EXTRA'])
@@ -90,7 +92,7 @@ elif env['platform'] == "windows":
         # MinGW
         env['CXX'] = 'x86_64-w64-mingw32-g++-win32'
         env['CC'] = 'x86_64-w64-mingw32-gcc-win32'
-        env.Append(CCFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
+        env.Append(CXXFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
         #env.Append(LINKFLAGS=['--static', '-Wl,--no-undefined', '-static-libgcc', '-static-libstdc++'])
         #env.Append(CPPDEFINES=['WIN32', '_WIN32', '_MSC_VER', '_WINDOWS', '_CRT_SECURE_NO_WARNINGS'])
         env.Append(CFLAGS=['-DWINVER=0x502','-DWIN32','-D_WIN32','-Wno-int-to-pointer-cast', 
@@ -104,13 +106,11 @@ elif env['platform'] == "windows":
         env.Append(LINKFLAGS=['-Wl,--export-all-symbols',
                 '-static-libgcc','/usr/x86_64-w64-mingw32/lib/libm.a'])
 
-    #env.Append(LINKFLAGS=['-lkernel32','-luser32', '-lgdi32', 
-    #                      '-lwinspool', '-lshell32', '-lole32', 
-    #                      '-loleaut32', '-luuid', '-lcomdlg32', 
-    #                      '-ladvapi32','-lws2_32', '-lwsock32'])
-    env.Append(LINKFLAGS=['/usr/x86_64-w64-mingw32/lib/libws2_32.a',
-                            '/usr/x86_64-w64-mingw32/lib/libwsock32.a'])
-
+    env.Append(LIBS=['-lkernel32','-luser32', '-lgdi32', 
+                          '-lwinspool', '-lshell32', '-lole32', 
+                          '-loleaut32', '-luuid', '-lcomdlg32', 
+                          '-ladvapi32','-lws2_32', '-lwsock32'])
+    env['SHLIBSUFFIX']  = '.dll'
 
     #env.Append(CPPDEFINES=['WINVER=0x502'])
     #env.Append(CCFLAGS=['-W3', '-GR'])

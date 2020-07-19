@@ -32,6 +32,9 @@ int Gdpd::audioCallback(void *outputBuffer, void *inputBuffer,
 }
 
 Gdpd::Gdpd(): m_vol(1) {
+	//create message array
+	m_messages = new Array();
+	m_init=false;
 }
 
 void Gdpd::_init() {
@@ -110,18 +113,11 @@ int Gdpd::start() {
 
 
 	if(!m_pd.init(m_nbInputs, m_nbOutputs, m_sampleRate, true)) {
-		Godot::print("GDPD : Error starting libpd");
+		print("GDPD : Error starting libpd");
 		return 1;
 	}
 
 	//libpd_set_verbose(1);
-
-	//create message array
-	m_messages = new Array();
-
-	//create message hook
-	m_pd.subscribe("to_gdpd");
-	m_pd.setReceiver(this);
 
 	//start dsp
 	m_pd.computeAudio(true);
@@ -142,11 +138,16 @@ int Gdpd::start() {
 						   m_sampleRate, &m_bufferFrames, &audioCallback, 
 						   this, &options);
 		m_audio.startStream();
+		print("Stream started");
 	}
 	catch(RtAudioError& e) {
 		Godot::print(e.getMessage().c_str());
 	}
 
+	//create message hook
+	m_pd.subscribe("to_gdpd");
+	m_pd.setReceiver(this);
+	m_init=true;
 
 	print("Initialized");
 
@@ -156,7 +157,6 @@ int Gdpd::start() {
 void Gdpd::stop() {
 	m_audio.stopStream();
 	m_audio.closeStream();
-	m_pd.clear();
 	m_pd.computeAudio(false);
 	print("Stopped");
 }
@@ -180,17 +180,42 @@ void Gdpd::openfile(godot::String baseStr, godot::String dirStr) {
 	std::wstring dirWs = dirStr.unicode_str();
 	std::string dirS(dirWs.begin(), dirWs.end());
 
+	if(m_patchsMap.find(baseS)!=m_patchsMap.end()) {
+		print("Patch "+baseS+" already opened");
+		return;
+	}
+
 	//libpd_openfile(baseS.c_str(), dirS.c_str());
 	//m_patch = m_pd.openPatch(baseS.c_str(), dirS.c_str());
-	m_pd.openPatch(baseS.c_str(), dirS.c_str());
+	pd::Patch p1 = m_pd.openPatch(baseS.c_str(), dirS.c_str());
+	if(!p1.isValid()) {
+		print("Could not open patch "+baseS);
+	}
+	else {
+		print("Opened patch "+baseS);
+		m_patchsMap[baseS] = p1;
+	}
 
-	print("Opened patch");
+	//m_pd.subscribe("to_gdpd");
+
+	/*
+	if(!m_pd.init(m_nbInputs, m_nbOutputs, m_sampleRate, true)) {
+		Godot::print("GDPD : Error starting libpd");
+	}
+	m_pd.setReceiver(this);
+	m_pd.computeAudio(true);
+	*/
 }
 
 void Gdpd::closefile(godot::String baseStr) {
 	std::wstring baseWs = baseStr.unicode_str();
 	std::string baseS(baseWs.begin(), baseWs.end());
-	m_pd.closePatch(baseS.c_str());
+	if(m_patchsMap.find(baseS)!=m_patchsMap.end()) {
+		m_pd.closePatch(m_patchsMap[baseS]);
+		m_patchsMap.erase(baseS);
+		print("Closed patch "+baseS);
+	}
+	//m_pd.closePatch(baseS.c_str());
 }
 
 void Gdpd::subscribe(String symbStr) {
@@ -239,7 +264,6 @@ int Gdpd::finish_list(String destStr) {
     int res = libpd_finish_list(destS.c_str());
     return res;
 }
-
 
 void Gdpd::print(const std::string& message) {
 	Godot::print((std::string("GDPD : ")+message).c_str());

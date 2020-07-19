@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <map>
 
 #include <Godot.hpp>
 #include <AudioStreamPlayer.hpp>
@@ -31,6 +32,9 @@ private:
 	int m_sampleRate;
 	int m_inputDevice;
 	int m_outputDevice;
+	std::map<std::string, pd::Patch> m_patchsMap;
+
+	bool m_init;
 
 public:
     static void _register_methods();

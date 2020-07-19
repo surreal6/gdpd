@@ -3,35 +3,83 @@
 [sub_resource type="GDScript" id=1]
 script/source = "extends Control
 
-var gdpd = load(\"res://addons/gdpd/bin/gdpd.gdns\")
-#var patch
+var _gdpd
+
+var _patch = 0
 
 func _ready():
-
-	#the patch path should be the absolute one
-	_load_patch(ProjectSettings.globalize_path(\"res://patch1.pd\"))
-	_load_patch(ProjectSettings.globalize_path(\"res://patch2.pd\"))
-
+	_gdpd = load(\"res://addons/gdpd/bin/gdpd.gdns\").new()
+	pass
+	
+func _process(delta):
+	while _gdpd.has_message() :
+		print(\"got msg\")
+		var msg = _gdpd.get_next()
+		print(msg)
 
 func _load_patch(pd_patch) :
 	#separate file name from directory
 	var patch_name = pd_patch.split(\"/\")[-1]
 	var patch_dir = pd_patch.trim_suffix(patch_name)
-	
-	#initialize pd 
-	var patch = gdpd.new()
 
-	#retrieve 
-	var inps = patch.get_available_input_devices()
-	var outs = patch.get_available_output_devices()
-	patch.init_devices(inps[0], outs[0])
-	
-	
 	#load patch
-	patch.openfile(patch_name, patch_dir)
+	_gdpd.openfile(patch_name, patch_dir)
+
+func _on_Start_pressed() :	
+	var inps = _gdpd.get_available_input_devices()
+	var outs = _gdpd.get_available_output_devices()
+	_gdpd.init_devices(inps[0], outs[0])
+	
+	#the patch path should be the absolute one
+	_load_patch(ProjectSettings.globalize_path(\"res://patch1.pd\"))
+	_load_patch(ProjectSettings.globalize_path(\"res://patch2.pd\"))
+	
+	_gdpd.start_message(1)
+	_gdpd.add_symbol(\"from godot\")
+	_gdpd.finish_list(\"blup\")
+
+	_gdpd.subscribe(\"toBfWeb\")
+	
+func _on_Stop_pressed():
+	
+	_gdpd.closefile(\"patch1.pd\")
+	_gdpd.closefile(\"patch2.pd\")
+	_gdpd.stop()
+
+
 "
 
 [node name="Control" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Stop" type="Button" parent="."]
+margin_left = 73.0
+margin_top = 198.0
+margin_right = 176.0
+margin_bottom = 244.0
+text = "Stop"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Start" type="Button" parent="."]
+margin_left = 83.0
+margin_top = 93.0
+margin_right = 187.0
+margin_bottom = 144.0
+text = "Start"
+
+[node name="Load" type="Button" parent="."]
+margin_left = 103.0
+margin_top = 159.0
+margin_right = 145.0
+margin_bottom = 179.0
+text = "Load"
+[connection signal="pressed" from="Stop" to="." method="_on_Stop_pressed"]
+[connection signal="pressed" from="Start" to="." method="_on_Start_pressed"]
+[connection signal="pressed" from="Load" to="." method="_on_Load_pressed"]
