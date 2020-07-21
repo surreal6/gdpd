@@ -7,7 +7,7 @@ opts = Variables([], ARGUMENTS)
 env = DefaultEnvironment()
 
 # Define our options
-opts.Add(EnumVariable('target', "Compilation target", 'debug', ['d', 'debug', 'r', 'release']))
+opts.Add(EnumVariable('target', "Compilation target", 'release', ['d', 'debug', 'r', 'release']))
 opts.Add(EnumVariable('platform', "Compilation platform", '', ['', 'windows', 'x11', 'linux', 'osx']))
 opts.Add(EnumVariable('p', "Compilation target, alias for 'platform'", '', ['', 'windows', 'x11', 'linux', 'osx']))
 opts.Add(BoolVariable('use_llvm', "Use the LLVM / Clang compiler", 'no'))
@@ -72,7 +72,7 @@ elif env['platform'] in ('x11', 'linux'):
         env.Append(CFLAGS=['-std=c11'])
         env.Append(CXXFLAGS=['-std=c++17'])
     else:
-        env.Append(CCFLAGS=['-fPIC', '-g', '-O3'])
+        env.Append(CCFLAGS=['-fPIC', '-O3'])
         env.Append(CFLAGS=['-std=c11'])
         env.Append(CXXFLAGS=['-std=c++17'])
 
@@ -85,31 +85,39 @@ elif env['platform'] == "windows":
         # MSVC
         env.Append(LINKFLAGS=['/WX'])
         if env['target'] == 'debug':
-            env.Append(CCFLAGS=['/EHsc', '/D_DEBUG', '/MDd'])
+            env.Append(CCFLAGS=['/EHsc', '/D_DEBUG', '/MTd'])
         elif env['target'] == 'release':
             env.Append(CCFLAGS=['/O2', '/EHsc', '/DNDEBUG', '/MD'])
     else:
         # MinGW
         env['CXX'] = 'x86_64-w64-mingw32-g++-win32'
         env['CC'] = 'x86_64-w64-mingw32-gcc-win32'
-        env.Append(CXXFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
+        #env.Append(CXXFLAGS=['-g', '-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
+        env.Append(CXXFLAGS=['-O3', '-std=c++14', '-Wwrite-strings', '-fpermissive'])
         #env.Append(LINKFLAGS=['--static', '-Wl,--no-undefined', '-static-libgcc', '-static-libstdc++'])
         #env.Append(CPPDEFINES=['WIN32', '_WIN32', '_MSC_VER', '_WINDOWS', '_CRT_SECURE_NO_WARNINGS'])
-        env.Append(CFLAGS=['-DWINVER=0x502','-DWIN32','-D_WIN32','-Wno-int-to-pointer-cast', 
-                               '-Wno-pointer-to-int-cast'])
-        env.Append(CPPDEFINES=['HAVE_UNISTD_H=1','LIBPD_EXTRA=1','PD=1', 
-                                'PD_INTERNAL','USEAPI_DUMMY=1','libpd_EXPORTS'])
-        #env.Append(CPPDEFINES=['__WINDOWS_DS__', 'LIBPD_EXTRA'])
-        env.Append(CPPDEFINES=['__RTAUDIO_DUMMY__', 'LIBPD_EXTRA'])
-        env.Append(CFLAGS=['-DUSEAPI_DUMMY', '-DPD', '-DHAVE_UNISTD_H', '-D_GNU_SOURCE'])
+        env.Append(CFLAGS=['-DWINVER=0x502', '-DWIN32', '-D_WIN32', 
+                        '-Wno-int-to-pointer-cast', '-Wno-pointer-to-int-cast'])
+        #env.Append(CPPDEFINES=['HAVE_UNISTD_H=1','LIBPD_EXTRA=1','PD=1', 
+                                #'PD_INTERNAL','USEAPI_DUMMY=1','libpd_EXPORTS'])
+        env.Append(CPPDEFINES=['PD_INTERNAL', 'libpd_EXPORTS']) 
+        env.Append(CPPDEFINES=['__WINDOWS_DS__'])
+        #env.Append(CPPDEFINES=['__WINDOWS_WASAPI__'])
+        #env.Append(CPPDEFINES=['__RTAUDIO_DUMMY__', 'LIBPD_EXTRA'])
+        #env.Append(CFLAGS=['-DUSEAPI_DUMMY', '-DPD', '-DHAVE_UNISTD_H', '-D_GNU_SOURCE'])
         env.Append(LDPATH=['/usr/x86_64-w64-mingw32/lib/'])
         env.Append(LINKFLAGS=['-Wl,--export-all-symbols',
                 '-static-libgcc','/usr/x86_64-w64-mingw32/lib/libm.a'])
 
-    env.Append(LIBS=['-lkernel32','-luser32', '-lgdi32', 
-                          '-lwinspool', '-lshell32', '-lole32', 
-                          '-loleaut32', '-luuid', '-lcomdlg32', 
-                          '-ladvapi32','-lws2_32', '-lwsock32'])
+    #env.Append(LIBS=['-lkernel32','-luser32', '-lgdi32', 
+    #                  '-lwinspool', '-lshell32', '-lole32', 
+    #                  '-loleaut32', '-luuid', '-lcomdlg32', 
+    #                  '-ladvapi32','-lws2_32', '-lwsock32',
+    #                  '-ldsound', '-lwinmm'])
+    env.Append(LIBS=['-lws2_32', '-lwsock32','-loleaut32', '-luuid',
+                     '-lole32', '-ldsound', '-lwinmm'])
+    #env.Append(LIBS=['-lws2_32', '-lwsock32','-loleaut32', '-lmfplat','-lmfuuid', 
+    #                 '-lole32', '-lwmcodecdspuuid' ,'-luuid','-lksuser'])
     env['SHLIBSUFFIX']  = '.dll'
 
     #env.Append(CPPDEFINES=['WINVER=0x502'])
